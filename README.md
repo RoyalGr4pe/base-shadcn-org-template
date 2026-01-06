@@ -1,20 +1,38 @@
-# Base ShadCN Template
+# Base ShadCN Organization Template
 
-A modern, production-ready Next.js template featuring Firebase Authentication, Stripe payments, and a beautiful UI built with ShadCN components and Tailwind CSS.
+A modern, production-ready Next.js template featuring Firebase Authentication, **organization management**, **team collaboration**, Stripe payments at the organization level, and a beautiful UI built with ShadCN components and Tailwind CSS.
+
+## What Makes This Different?
+
+This template extends the Base ShadCN Template with **full organization support**:
+
+- **Multi-tenant Organizations**: Users can create and manage organizations
+- **Team Management**: Invite and manage organization members with role-based access
+- **Organization-based Billing**: Stripe subscriptions are tied to organizations, not individual users
+- **Collaborative Workspaces**: Multiple users can work within the same organization context
 
 ## Features
+
+- **Organization Management**: Complete multi-tenant organization system
+  - Create and manage organizations
+  - Organization switching and context
+  - Organization settings and customization
+  - Role-based access control (Owner, Admin, Member)
+  - Organization invitations and member management
+  - Member removal and permission management
 
 - **Authentication**: Complete Firebase Authentication integration with NextAuth.js
   - Email/password sign-up and login
   - Password reset functionality
-  - User onboarding flow
+  - User onboarding flow with organization creation
   - Protected routes and session management
   - Admin SDK integration for server-side operations
 
-- **Payment Integration**: Stripe payment processing
-  - Customer creation and management
+- **Payment Integration**: Organization-level Stripe payment processing
+  - Stripe customers created per organization (not per user)
+  - Organization-based subscription management
   - Pricing table integration
-  - Subscription handling
+  - Billing management at organization level
   - Support for both test and production modes
 
 - **UI Components**: Beautiful, accessible components built with ShadCN
@@ -30,6 +48,9 @@ A modern, production-ready Next.js template featuring Firebase Authentication, S
   - CRUD operations (Create, Read, Update, Delete)
   - Both client-side and server-side (Admin SDK) operations
   - Type-safe data models
+  - Multi-tenant data architecture with organization-based data isolation
+  - User-organization relationship management
+  - Invitation and membership tracking
 
 - **Security**: Built-in security features
   - Input validation utilities
@@ -62,7 +83,7 @@ A modern, production-ready Next.js template featuring Firebase Authentication, S
 1. Clone the repository:
 ```bash
 git clone <your-repo-url>
-cd base-shadcn-template
+cd base-shadcn-org-template
 ```
 
 2. Install dependencies:
@@ -163,25 +184,27 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Project Structure
 
 ```
-base-shadcn-template/
+base-shadcn-org-template/
 ├── src/
 │   ├── app/                      # Next.js App Router pages
 │   │   ├── (auth)/              # Authentication routes
 │   │   │   ├── login/
 │   │   │   ├── sign-up/
 │   │   │   ├── reset/
-│   │   │   └── onboarding/
+│   │   │   └── onboarding/     # Now creates organization
 │   │   ├── (main)/              # Protected main app routes
-│   │   │   ├── dashboard/
-│   │   │   ├── settings/
-│   │   │   └── preparing/
+│   │   │   ├── dashboard/       # Organization dashboard
+│   │   │   ├── settings/        # User & organization settings
+│   │   │   ├── preparing/
+│   │   │   └── members/         # Organization member management
 │   │   └── api/                 # API routes
 │   │       └── auth/[...nextauth]/
 │   ├── components/              # React components
 │   │   ├── auth/               # Authentication forms
 │   │   ├── dom/                # DOM-specific components
-│   │   ├── layout/             # Layout components
+│   │   ├── layout/             # Layout components (with org switcher)
 │   │   ├── main/               # Main app components
+│   │   │   └── members/       # Member management components
 │   │   └── ui/                 # ShadCN UI components
 │   ├── constants/              # App constants
 │   ├── hooks/                  # Custom React hooks
@@ -189,9 +212,12 @@ base-shadcn-template/
 │   │   ├── firebase/          # Firebase config
 │   │   └── authOptions.ts     # NextAuth configuration
 │   ├── models/                # TypeScript models
+│   │   ├── User.ts           # User model
+│   │   ├── Organization.ts   # Organization model
+│   │   └── UserOrganization.ts # User-org relationships
 │   ├── services/              # Business logic services
 │   │   ├── firebase/         # Firebase operations
-│   │   └── stripe/           # Stripe operations
+│   │   └── stripe/           # Stripe operations (org-based)
 │   ├── types/                # TypeScript type definitions
 │   └── utils/                # Utility functions
 ├── public/                   # Static assets
@@ -208,7 +234,15 @@ base-shadcn-template/
 
 ## Key Features Explained
 
-### Authentication Flow
+### Organization-Based Architecture
+
+This template is designed for **multi-tenant SaaS applications** where:
+- Users belong to one or more organizations
+- Organizations have their own Stripe subscriptions
+- Team members collaborate within organization contexts
+- Billing and features are managed at the organization level
+
+### Authentication & Onboarding Flow
 
 1. **Sign Up** ([/sign-up](src/app/(auth)/sign-up/page.tsx))
    - User creates account with email/password
@@ -216,18 +250,44 @@ base-shadcn-template/
    - Redirects to onboarding
 
 2. **Onboarding** ([/onboarding](src/app/(auth)/onboarding/page.tsx))
-   - Collects additional user information
+   - Collects user information
+   - **Creates new organization** (user becomes owner)
    - Creates Firestore user document
-   - Creates Stripe customer
+   - **Creates Stripe customer for the organization**
+   - Links user to organization
    - Redirects to preparing
 
 3. **Preparing** ([/preparing](src/app/(main)/preparing/page.tsx))
    - Setup completion step
-   - Finalizes user configuration
+   - Finalizes organization configuration
 
 4. **Dashboard** ([/dashboard](src/app/(main)/dashboard/page.tsx))
-   - Main application interface
+   - Organization-specific dashboard
    - Protected route requiring authentication
+   - Context-aware based on selected organization
+
+### Organization Management
+
+**Creating Organizations**
+- First organization created during onboarding
+- Users can create additional organizations
+- Each organization gets its own Stripe customer
+
+**Managing Members** ([/members](src/app/(main)/members/))
+- Invite users to organization via email
+- Assign roles: Owner, Admin, Member
+- Remove members from organization
+- View all organization members and their roles
+
+**Organization Switching**
+- Users can switch between organizations they belong to
+- UI updates to reflect current organization context
+- Sidebar includes organization switcher
+
+**Roles & Permissions**
+- **Owner**: Full control, can delete organization, manage billing
+- **Admin**: Can manage members and settings
+- **Member**: Basic access to organization resources
 
 ### Firebase Operations
 
@@ -246,11 +306,17 @@ Server-side Admin SDK operations (see [src/services/firebase/](src/services/fire
 
 ### Stripe Integration
 
-The template includes:
-- Customer creation during onboarding
+**Organization-Level Billing:**
+- Stripe customers are created **per organization**, not per user
+- Customer creation happens during organization setup
+- Organization owners manage subscriptions
 - Pricing table integration with theme support
-- Billing management in settings
+- Billing management in organization settings
+- Multiple users in an organization share the same subscription
 - See [src/services/stripe/](src/services/stripe/) for implementation
+
+**Key Difference from Base Template:**
+In the base template, each user has their own Stripe customer. In this template, the **organization** is the Stripe customer, enabling team-based billing.
 
 ### Theme Support
 
